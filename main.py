@@ -1,30 +1,35 @@
 #pgzero
 import random
-# variables globales and data structure.
+
+# Global variables and data structures
 cell = Actor('border')
 cell1 = Actor('floor')
-cell2 = Actor("track_down")
+cell2 = Actor("track_down")  # Used to indicate the player's path
 cell3 = Actor("muerte")
 cell4 = Actor("win")
-# Ventana de juego
-size_w = 51 # Anchura del campo en celdas
-size_h = 30 # Altura del campo en celdas
+
+# Game window settings
+size_w = 51
+size_h = 30
 WIDTH = cell.width * size_w
 HEIGHT = cell.height * size_h
-TITLE = "minimalist_square_game" # Título de la ventana de juego
-FPS = 30 # Número de fotogramas por segundo
+TITLE = "minimalist_square_game"
+FPS = 30
+
 # UI elements
 background = Actor("background")
 play = Actor("play", (900, 300))
-# Rastrear movimiento
-# Lista para almacenar las posiciones por las que ha pasado el jugador
-path_taken = []
-# modo
+
+# Tracking movement
+path_taken = []  # List to store positions the player has passed through
+
+# Game mode
 mode = "game"
 win = 0
-current_player = 1  # 1 es pora jugador, 2 para la ia enemiga. 
-# Cordenadas: 
-old_position = 0
+current_player = 1
+
+# Player's old position
+old_position = (0, 0)
 old_x = 0
 old_y = 0       
              #1   #2   #3   #4   #5   #6   #7   #8   #9   #10  #11  #12  #13  #14   #15 #16  #17  #18  #19  #20  #21  #22  #23  #24  #25  #26  #27  #28  #29  #30  #31  #32  #33  #34  #35 #36  #37  #38  #39  #40   #40  #41  #42  #43  #44  #45 #46  #47  #48  #49  #51 
@@ -59,7 +64,7 @@ my_map = [  ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0
                       
 
 #Unit Class Definitions
-
+initial_position = 0
 class Unit:
     def __init__(self, name, sprite, vida, ataque, defensa, velocidad, bonus, position=(0, 0), abilities=[]):
         self.name = name
@@ -97,7 +102,8 @@ class Unit:
         return (dx**2 + dy**2) ** 0.5
 
     def move(self, direction):
-        # Mover el personaje hasta que encuentre una pared
+        global initial_position, path_taken
+        initial_position = self.position  # Store initial position for comparison after movement
         while self.can_move(direction):
             if direction == "up":
                 self.position = (self.position[0], self.position[1] - 1)
@@ -107,9 +113,12 @@ class Unit:
                 self.position = (self.position[0] - 1, self.position[1])
             elif direction == "right":
                 self.position = (self.position[0] + 1, self.position[1])
-
-            # Actualizar la posición del sprite
-            self.update_sprite_position()
+        
+            # If the character has moved, record the new position
+            if initial_position != self.position:
+                path_taken.append(self.position)  # Add the moved-to position
+            
+        self.update_sprite_position()
 
     def can_move(self, direction):
         # Cálculo de la nueva posición potencial basada en la dirección
@@ -147,10 +156,7 @@ class Unit:
     def update_sprite_position(self):
         # Update the sprite's position based on grid coordinates
         self.sprite.pos = (self.position[0] * cell.width + cell.width // 2, self.position[1] * cell.height + cell.height // 2)
-    
-    def attack(self, target):
-        # Implement attack logic, including calculating damage based on attack, defense, and abilities
-        pass
+
 
 # Clases:
 # Protagonista 
@@ -163,6 +169,10 @@ def map_draw():
                 cell.left = cell.width*j
                 cell.top = cell.height*i
                 cell.draw()
+            elif (j, i) in path_taken:  # Verificar si la posición está en path_taken
+                cell2.left = cell.width*j  # cell2 tiene la imagen de 'track_down' o la imagen que indique el camino recorrido
+                cell2.top = cell.height*i
+                cell2.draw()
             elif my_map[i][j] == "1":
                 cell1.left = cell.width*j
                 cell1.top = cell.height*i
@@ -218,7 +228,7 @@ def draw():
             screen.draw.text("Presiona enter para no reiniciar", center=(200, 300), color = 'red', fontsize = 20)
 
 def update(dt):
-    global old_position
+    global old_position, initial_position, path_taken
     old_position = char.position  # Guardar la posición vieja antes de moverse, para usos futuros.
     
     direction = None
@@ -233,8 +243,6 @@ def update(dt):
     
     if direction:
         char.move(direction) 
-
-    
     
 def on_key_down(key):
     if keyboard.d and char.x + 50 < WIDTH - 50: # LEFT
