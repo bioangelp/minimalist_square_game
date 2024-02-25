@@ -229,6 +229,16 @@ def check_for_death():
         win = -1
         mode = "fin"
 
+def reset_game():
+    global mode, win, start_time, path_taken, char
+    mode = "game"
+    win = 0
+    start_time = time.time()
+    path_taken = []  # Se reinicia el camino tomado por el jugador
+    char.position = (1, 1)  # Restablecer la posición inicial del personaje
+    char.update_sprite_position()  # Actualizar la posición del sprite del personaje
+
+
 def draw():
     if mode == "menu":
         screen.fill("#4397b3")
@@ -301,6 +311,9 @@ def on_key_down(key):
             start_time = time.time()  # Reset the start time
         elif mode == 'game' or mode == 'fin':  # Regresar al menu
             mode = 'menu'
+        elif mode == 'fin':  # Si el juego ha terminado y se presiona Enter
+            reset_game()  # Llamar a reset_game para reiniciar los valores
+            mode = 'menu'  # Cambiar al modo menú
     if keyboard.d and char.x + 50 < WIDTH - 50: # LEFT
         char.x += 50
         char.image = "stand"
