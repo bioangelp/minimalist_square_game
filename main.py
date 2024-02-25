@@ -223,6 +223,15 @@ def check_win_condition():
     if unique_tiles_covered >= total_floor_tiles:
         win = 1
         mode = "fin"
+        
+def check_for_death():
+    global win, mode
+    # Get the player's current grid position
+    grid_x, grid_y = char.position
+    # Check if the player's current position is a "muerte" tile
+    if my_map[grid_y][grid_x] == '3':
+        win = -1
+        mode = "fin"
 
 def draw():
     if mode == "menu":
@@ -233,10 +242,11 @@ def draw():
         screen.fill("#2f3542")
         map_draw()
         char.sprite.draw() 
-        screen.draw.text("HP:", center=(25, 475), color = 'white', fontsize = 20)
-        screen.draw.text(str(char.vida), center=(75, 475), color='white', fontsize=20)
-        screen.draw.text("AP:", center=(375, 475), color = 'white', fontsize = 20)
-        screen.draw.text(str(char.ataque), center=(425, 475), color = 'white', fontsize = 20)
+        current_time = time.time()
+        elapsed_time = current_time - start_time
+        remaining_time = int(max(duration - elapsed_time, 0))
+        screen.draw.text(f"Tiempo restante: {remaining_time}", center=(WIDTH - 100, 25), color='white', fontsize=20)
+    
     elif mode == "fin":
         if win == 1:
             screen.draw.text("Felicidades has ganado", center=(200, 200), color = 'red', fontsize = 20)
@@ -255,7 +265,7 @@ def update(dt):
     if remaining_time <= 0:
         win = -1
         mode = "fin"
-        
+
     direction = None
     if keyboard.right:
         direction = "right"
