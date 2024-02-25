@@ -1,5 +1,5 @@
 #pgzero
-import random
+import random, time
 
 # Global variables and data structures
 cell = Actor('border')
@@ -20,13 +20,17 @@ FPS = 30
 background = Actor("background")
 play = Actor("play", (900, 300))
 
-# Tracking movement
+# Tracking movement 
 path_taken = []  # List to store positions the player has passed through
 
 # Game mode
 mode = "game"
 win = 0
 current_player = 1
+
+# Timer setup
+start_time = time.time()
+duration = 60  # Duration of the timer in seconds
 
 # Player's old position
 old_position = (0, 0)
@@ -102,23 +106,22 @@ class Unit:
         return (dx**2 + dy**2) ** 0.5
 
     def move(self, direction):
-        global initial_position, path_taken
-        initial_position = self.position  # Store initial position for comparison after movement
-        while self.can_move(direction):
-            if direction == "up":
-                self.position = (self.position[0], self.position[1] - 1)
-            elif direction == "down":
-                self.position = (self.position[0], self.position[1] + 1)
-            elif direction == "left":
-                self.position = (self.position[0] - 1, self.position[1])
-            elif direction == "right":
-                self.position = (self.position[0] + 1, self.position[1])
-        
-            # If the character has moved, record the new position
-            if initial_position != self.position:
-                path_taken.append(self.position)  # Add the moved-to position
-            
-        self.update_sprite_position()
+        global old_position
+        old_position = char.position  # Save the old position before moving
+    
+        direction = None
+        if keyboard.right:
+            direction = "right"
+        elif keyboard.left:
+            direction = "left"
+        elif keyboard.down:
+            direction = "down"
+        elif keyboard.up:
+            direction = "up"
+        if direction:
+            char.move(direction)
+            check_win_condition()  # Check if the player has won after moving
+            self.update_sprite_position()
 
     def can_move(self, direction):
         # Cálculo de la nueva posición potencial basada en la dirección
@@ -157,6 +160,25 @@ class Unit:
         # Update the sprite's position based on grid coordinates
         self.sprite.pos = (self.position[0] * cell.width + cell.width // 2, self.position[1] * cell.height + cell.height // 2)
 
+    def move_unit_in_direction(unit, direction):
+        # Keep moving in the direction until a boundary or non-movable tile is reached
+        global path_taken
+        while unit.can_move(direction):
+            # Update the unit's position based on the direction
+            new_x, new_y = unit.position
+            if direction == "up":
+                new_y -= 1
+            elif direction == "down":
+                new_y += 1
+            elif direction == "left":
+                new_x -= 1
+            elif direction == "right":
+                new_x += 1
+            # Set the new position
+            unit.position = (new_x, new_y)
+            path_taken.append(unit.position)  # Add the new position to the path taken
+            # Update the sprite position to reflect the new location
+            unit.update_sprite_position()
 
 # Clases:
 # Protagonista 
@@ -189,22 +211,18 @@ def map_draw():
                 cell3.left = cell.width*j
                 cell3.top = cell.height*i
                 cell3.draw() 
+                
+total_floor_tiles = sum(row.count('1') for row in my_map)
 
-def victory():
+def check_win_condition():
     global win, mode
-    # Convert character position to map grid coordinates
-    char_grid_x = char.position[0] // cell.width
-    char_grid_y = char.position[1] // cell.height
-    
-    # Check if the character is on a 'win' tile
-    if my_map[char_grid_y][char_grid_x] == '4':
-        win = 1
-    elif char.vida <= 0:
-        win = -1
-    
-    if win != 0:
-        mode = "fin"
+    # Calculate the number of unique tiles covered by the player
+    unique_tiles_covered = len(set(path_taken))
 
+    # Check if the player has covered all floor tiles
+    if unique_tiles_covered >= total_floor_tiles:
+        win = 1
+        mode = "fin"
 
 def draw():
     if mode == "menu":
@@ -228,9 +246,16 @@ def draw():
             screen.draw.text("Presiona enter para no reiniciar", center=(200, 300), color = 'red', fontsize = 20)
 
 def update(dt):
-    global old_position, initial_position, path_taken
-    old_position = char.position  # Guardar la posición vieja antes de moverse, para usos futuros.
-    
+    global mode, win
+    current_time = time.time()
+    elapsed_time = current_time - start_time
+    remaining_time = max(duration - elapsed_time, 0)  # Ensure remaining time doesn't go negative
+
+    # Check for game over due to timer running out
+    if remaining_time <= 0:
+        win = -1
+        mode = "fin"
+        
     direction = None
     if keyboard.right:
         direction = "right"
@@ -242,7 +267,8 @@ def update(dt):
         direction = "up"
     
     if direction:
-        char.move(direction) 
+        char.move_unit_in_direction(direction)  # Adjusted method call
+        check_win_condition()  # Check if the win condition is met after the move
     
 def on_key_down(key):
     if keyboard.d and char.x + 50 < WIDTH - 50: # LEFT
