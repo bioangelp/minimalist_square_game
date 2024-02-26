@@ -156,9 +156,14 @@ def change_level(level):
     char.update_sprite_position()  # Update sprite position
 
     if level == 1:
-        my_map = [['0', '0', '0', '0', '0'],
-                  ['0', '1', '1', '1', "0"],
-                  ['0', '0', '0', '0', '0']]
+        my_map = [['0', '0', '0', '0', '0', '0', '0'],
+                ['0', '1', '1', '1', '0', '1', '0'],
+                ['0', '1', '0', '0', '1', '1', '0'],
+                ['0', '1', '1', '1', '1', '0', '0'],
+                ['0', '0', '0', '0', '1', '1', '0'],
+                ['0', '1', '1', '1', '1', '1', '0'],
+                ['0', '0', '0', '0', '0', '0', '0']]
+
     elif level == 2:
                     #1   #2   #3   #4   #5   #6   #7   #8   #9   #10  #11  #12  #13  #14   #15 #16  #17  #18  #19  #20  #21  #22  #23  #24  #25  #26  #27  #28  #29  #30  #31  #32  #33  #34  #35 #36  #37  #38  #39  #40   #40  #41  #42  #43  #44  #45 #46  #47  #48  #49  #51 
         my_map = [  ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'], #1
@@ -224,10 +229,10 @@ total_floor_tiles = sum(row.count('1') for row in my_map)
 
 def check_win_condition():
     global win, mode
-    # Calcula el numero de casillas por los que has pasado
+    # Ensure unique_tiles_covered counts only unique positions in path_taken.
     unique_tiles_covered = len(set(path_taken))
 
-    # checha si ya has pasado por todas las casillas para que ganes.
+    # Revisa que ya hayas pasado por todas las tiles
     if unique_tiles_covered >= total_floor_tiles:
         win = 1
         mode = "fin"
